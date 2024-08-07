@@ -1,0 +1,139 @@
+---
+title: "latentsn: Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{latentsn: Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(latentsn)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+# Data input
+
+Data should be a marked `spatstat.geom::ppp` object with a binary mark. 
+
+We demonstrate the package functionality on a synthetic data. 
+
+```{r}
+set.seed(1)
+# some parameters
+p1 <- lsn_simpars_default(ndata = 300, 
+                          # kernel shape
+                          tau = .5,
+                          # generator tree sizes, gamma-distr
+                          psi_dbh = c(50, 200),
+                          # Repulsion in the generator tree locations, Strauss
+                          psi_lambda0 = 0.01,
+                          psi_gamma = log(.1), # -inf hard-core, 0 none 
+                          psi_range = 15, 
+                          # logistic coefficients
+                          theta = c(qlogis(.05), # ambient 5%
+                                    log(2)) # effect of shotnoise
+                          )
+# Simulate a random generator set, create the field, and mark.
+sim1 <- lsn_simulate(p1)
+```
+
+For illustration, also compute the field everywhere.
+
+```{r}
+U <- lsn_shotnoise(psi = sim1$psi, bbox = p1$bbox, resx = 2^8) |> 
+  as_tibble()
+```
+
+Illustrate:
+
+```{r}
+U |> 
+  ggplot() +
+  # Latent generators
+  geom_raster(aes(x=x, y=y, 
+                  fill = plogis(p1$theta[1] + p1$theta[2] * p1$rho_scale * value)
+                  )
+              ) +
+  geom_point(data = sim1$psi, aes(x,y), shape = 3, col = "white") +
+  # Observations 
+  geom_point(data = sim1$phi, 
+             aes(x = x, y = y, shape = infected, color = infected), 
+             size = 2) + 
+  #
+  coord_fixed(exp=F, xlim = p1$bbox[1,], ylim = p1$bbox[2,]) +
+  labs(fill = "P(infection)")  +
+  scale_fill_viridis_c(option = "A", limits = c(0,1))
+```
+
+# Estimate the kernel
+
+The model is estimated using a custom MCMC. To run many chains, use a wrapper.
+
+
+```{r}
+one_run <- function(...)
+  lsn_mcmc_estimate(phi = sim1$phi, 
+                    niter = 30000, 
+                    keep_every = 50,
+                    # priors
+                    prior_lambda0 = c(100, 1000), # intensity of generators. make stiff
+                    prior_psi = c(gamma = log(.1), range = 15), # repulsion amongst generators
+                    prior_log_tau = c(log(.5), 0.1), # normal
+                    prior_theta = list(m = c(plogis(.1), 1), S = diag(c(1, 10)) ), # mv-normal mean and covariance
+                    print_every = Inf # disable output
+  )
+# then run in parallel somehow. Here for illustration we run in sequence.
+
+mc1 <- one_run()
+mc2 <- one_run()
+mc <- list(mc1, mc2)
+```
+
+Some checks.
+
+```{r}
+# gather traces
+tra <- lapply(1:2, \(i) mc[[i]]$hist_par |> mutate(iter = 1:n(), chain = i)) |> 
+  bind_rows()
+tral <- tra |> 
+  pivot_longer(-c(iter, chain))
+```
+
+Visual checks of convergence
+
+```{r}
+tral |> 
+  ggplot() + 
+  geom_line(aes(iter, value, col = factor(chain) )) +
+  facet_wrap(~name, scale = "free", ncol = 3)
+```
+
+Posterior densities
+
+```{r}
+tral |> 
+  filter(iter > 5000 & iter %% 5 == 0) |> 
+  ggplot() +
+  geom_density(aes(value)) +
+  facet_wrap(~name, scale = "free", ncol = 3)
+```
+
+Samples from the posterior past-risk field need evaulation of the shotnoise field along the *kept* (`keep_every`) samples of the latent generators, the kernel shape parameter, and the logistic parameters. 
+
+```{r}
+
+```
+
+
+
+

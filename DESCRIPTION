@@ -1,0 +1,15 @@
+Package: latentsn
+Title: Latent Shotnoise Risk Field Estimation From Binary Marked Point Patterns
+Authors: 
+    Tuomas Rajala <tuomas.rajala@iki.fi>
+Version: 0.1
+Description: MCMC algorithm for estimating a model for a binary-marked point pattern, where marking probability is given by a 
+  shot-noise field with a very specific shape that models the risk from the spreading of root-rot inducing fungus via root-systems of spruces.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
