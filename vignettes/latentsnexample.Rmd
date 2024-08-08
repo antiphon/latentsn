@@ -10,7 +10,9 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 5
 )
 ```
 
@@ -21,11 +23,13 @@ library(tidyr)
 library(ggplot2)
 ```
 
+This vignette shows the functionality available in the package `latentsn`. 
+
 # Data input
 
-Data should be a marked `spatstat.geom::ppp` object with a binary mark. 
+Data should be a data frame of coordinates `x,y` object with a binary mark in variable `xii`. 
 
-We demonstrate the package functionality on a synthetic data. 
+We demonstrate the package functionality on a synthetic data, which we now simulate. 
 
 ```{r}
 set.seed(1)
@@ -41,27 +45,28 @@ p1 <- lsn_simpars_default(ndata = 300,
                           psi_range = 15, 
                           # logistic coefficients
                           theta = c(qlogis(.05), # ambient 5%
-                                    log(2)) # effect of shotnoise
+                                    log(2)) # effect of shotnoise.
                           )
 # Simulate a random generator set, create the field, and mark.
 sim1 <- lsn_simulate(p1)
 ```
 
-For illustration, also compute the field everywhere.
+For illustration, also compute the riskfield everywhere.
 
 ```{r}
 U <- lsn_shotnoise(psi = sim1$psi, bbox = p1$bbox, resx = 2^8) |> 
   as_tibble()
+risk <- mutate(U ,risk = plogis(p1$theta[1] + p1$theta[2] * p1$rho_scale * value))
 ```
 
 Illustrate:
 
 ```{r}
-U |> 
+grisk <- risk |> 
   ggplot() +
   # Latent generators
   geom_raster(aes(x=x, y=y, 
-                  fill = plogis(p1$theta[1] + p1$theta[2] * p1$rho_scale * value)
+                  fill = risk
                   )
               ) +
   geom_point(data = sim1$psi, aes(x,y), shape = 3, col = "white") +
@@ -72,13 +77,22 @@ U |>
   #
   coord_fixed(exp=F, xlim = p1$bbox[1,], ylim = p1$bbox[2,]) +
   labs(fill = "P(infection)")  +
-  scale_fill_viridis_c(option = "A", limits = c(0,1))
+  scale_fill_distiller(palette = "Greys", limits = c(0,1), direction = 1)
+
+grisk + ggtitle("True risk + data")
 ```
 
-# Estimate the kernel
+To get the shotnoise value at given locations, provide the coordinate(s) in the `grid` argument to `lsn_shotnoise`: 
+
+```{r}
+phi_u <- cbind(x = runif(50, 0, 100), y = runif(50, 0, 100)) 
+U_u   <- lsn_shotnoise(psi = sim1$psi, grid = phi_u) 
+glimpse(U_u)
+```
+
+# Estimating the model parameters
 
 The model is estimated using a custom MCMC. To run many chains, use a wrapper.
-
 
 ```{r}
 one_run <- function(...)
@@ -88,12 +102,12 @@ one_run <- function(...)
                     # priors
                     prior_lambda0 = c(100, 1000), # intensity of generators. make stiff
                     prior_psi = c(gamma = log(.1), range = 15), # repulsion amongst generators
-                    prior_log_tau = c(log(.5), 0.1), # normal
-                    prior_theta = list(m = c(plogis(.1), 1), S = diag(c(1, 10)) ), # mv-normal mean and covariance
+                    prior_log_tau = c(log(.5), 0.2), # normal
+                    prior_theta = list(m = c(plogis(.1), log(2)), S = diag(c(1, 1)) ), # mv-normal mean and covariance
                     print_every = Inf # disable output
   )
-# then run in parallel somehow. Here for illustration we run in sequence.
 
+# then run in parallel with e.g. future-package. In this vignette we run 2 chains in a sequence.
 mc1 <- one_run()
 mc2 <- one_run()
 mc <- list(mc1, mc2)
@@ -109,6 +123,9 @@ tral <- tra |>
   pivot_longer(-c(iter, chain))
 ```
 
+
+# Checks
+
 Visual checks of convergence
 
 ```{r}
@@ -117,6 +134,8 @@ tral |>
   geom_line(aes(iter, value, col = factor(chain) )) +
   facet_wrap(~name, scale = "free", ncol = 3)
 ```
+
+Make sure to run enough iterations. Note: The `U` parameter is the coefficient of the shot-noise field, and is estimated in **log-scale** with a log-normal prior.
 
 Posterior densities
 
@@ -128,12 +147,86 @@ tral |>
   facet_wrap(~name, scale = "free", ncol = 3)
 ```
 
-Samples from the posterior past-risk field need evaulation of the shotnoise field along the *kept* (`keep_every`) samples of the latent generators, the kernel shape parameter, and the logistic parameters. 
+# Posterior risks 
+
+Samples from the posterior past-risk field need evaluation of the shotnoise field along the `keep_every` samples of the latent generators. The mcmc-object contains the matching iteration-index to match the kernel shape parameter, and the logistic parameters' samples. 
 
 ```{r}
+idx <- mc1$hist_psi_it
+i_keep <- which(idx > 15000 & idx %% 500 == 0)
 
+Ul <- lapply(i_keep, \(i){
+  # parameters
+  pi <- mc1$hist_par[idx[i], ]
+  tau <- exp(pi$log_tau)
+  
+  psii <- mc1$hist_psi[[i]] |> cbind( tau ) |> data.frame() |> setNames(nm = c("x","y","d", "tau"))
+  Ui <- lsn_shotnoise(psi = psii, bbox = p1$bbox ) |> 
+    as_tibble()
+  # risk
+  risk <- Ui |> 
+    mutate(risk = plogis( pi$Intercept + p1$rho_scale * exp(pi$U) * value ),
+           iter = i)
+})
+
+# Posterior mean risk
+Upast <- bind_rows(Ul) |> 
+  summarise(risk = mean(risk), .by = c(x, y))
 ```
 
+Illustrate
+
+```{r}
+grisk %+% Upast + ggtitle("Posterior mean past risk estimate")
+```
+
+Similarly, future risk. Assume tree dbh .3m
+
+```{r}
+# fixed tree locations now
+phi0 <- sim1$phi |>
+  filter(xii == 1) |> 
+  transmute(x, y, d = .3)
+
+Uf <- lapply(i_keep, \(i){
+  # parameters
+  pi <- mc1$hist_par[idx[i], ]
+  tau <- exp(pi$log_tau)
+  psii <- phi0 |> mutate(tau = tau)
+  Ui <- lsn_shotnoise(psi = psii, bbox = p1$bbox ) |> 
+    as_tibble() 
+  # risk
+  risk <- Ui |> 
+    mutate(risk = plogis( pi$Intercept + p1$rho_scale * exp(pi$U) * value ),
+           iter = i)
+})
+
+# Posterior mean future infection risk
+Ufuture <- bind_rows(Uf) |> 
+  summarise(risk = mean(risk), .by = c(x, y))
+```
+
+Illustrate
+
+```{r}
+grisk %+% Ufuture + ggtitle("Posterior mean future risk estimate")
+```
+
+# Estimated kernel 
+
+To check the kernel estimate, pull the samples and evaluate. Use again dbh=.3m.
 
 
+```{r, fig.width=5, fig.height=4}
+r <- seq(-1, 1, l = 101) * 10
+taus <- exp(mc1$hist_par[i_keep, "log_tau"])
+  
+kernl <- lapply(taus, \(tau){
+  tibble(r = r, kern = lsn_root_density_cutoff(abs(r), d = .3, tau = tau), i = tau)    
+}) |> bind_rows()
+
+kernl |> 
+  ggplot() +
+  geom_line(aes(r, kern, group = i), alpha = .1, linewidth = 2)
+```
 
