@@ -4,7 +4,7 @@
 \alias{lsn_simulate}
 \title{Simulate Latent Shotnoise Dependent Binary Marking}
 \usage{
-lsn_simulate(simpars = lsn_simpars_default(), xy, ...)
+lsn_simulate(simpars = lsn_simpars_default(), xy, psi, ...)
 }
 \arguments{
 \item{simpars}{list of simulation parameters. See lsn_simpars_default}

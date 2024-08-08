@@ -35,30 +35,41 @@ lsn_simpars_default <- function(bbox = rbind(0:1, 0:1) * 100,
 #' Todo
 #' @returns list(phi=tibble of data points with marks, psi = latent generator points, simpars = simpars)
 #'
-#' @import rstrauss dplyr
+#' @import dplyr
 #' @export
 lsn_simulate <- function(simpars = lsn_simpars_default(), 
                          xy, # optional locations to mark 
+                         psi, 
                          ...) {
   # shape of kernel
-  tau <-simpars$tau
+  tau <-  simpars$tau
   bbox <- simpars$bbox
   Rmax <- simpars$Rmax
-  gamma <- simpars$psi_gamma
-  range <- simpars$psi_range
+  #gamma <- simpars$psi_gamma
+  #range <- simpars$psi_range
   cutoff_q <- simpars$cutoffq
-  if(is.null(gamma)) gamma <- 0
-  if(is.null(range)) range <- 0
+  #if(is.null(gamma)) gamma <- 0
+  #if(is.null(range)) range <- 0
   if(is.null(Rmax)) Rmax <- 0
   if(is.null(cutoff_q)) cutoff_q <- 0.99
   
-  # the unknown point pattern
-  bbox_sim <- t(bbox) + c(-1,1) * Rmax
-  psi_x <- rstrauss(simpars$psi_lambda0, gamma = gamma, range, bbox = bbox_sim, perfect = TRUE)$x
+  # the generator point pattern
+  if(!missing(psi)){
+    stopifnot(is.data.frame(psi))
+    stopifnot( all(c("x", "y", "d") %in% names(psi)) )
+  }
+  else{
+    bbox_sim <- t(bbox) + c(-1,1) * Rmax
+    psi_n <- rpois(1, simpars$psi_lambda0 * diff(bbox_sim[,1]) * diff(bbox_sim[,2]))
+    psi   <- tibble(x = runif(psi_n, bbox_sim[1,1], bbox_sim[1,2]),
+                    y = runif(psi_n, bbox_sim[2,1], bbox_sim[2,2]),
+                    d = rgamma(psi_n, simpars$psi_dbh[1], simpars$psi_dbh[2]))
+  }
+  
+  psi_x   <- psi[,c("x", "y")] |> as.matrix()
+  psi_dbh <- psi[["d"]]
   psi_n <- nrow(psi_x)
-  #plot(psi_x, asp = 1)
-  psi_dbh <- rgamma(psi_n, simpars$psi_dbh[1], simpars$psi_dbh[2])
-  psi     <- tibble(
+  psi   <- tibble(
     x = psi_x[,1],
     y = psi_x[,2],
     d = psi_dbh) |> mutate(    tree = row_number(),

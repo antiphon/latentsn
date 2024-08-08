@@ -33,22 +33,22 @@ We demonstrate the package functionality on a synthetic data, which we now simul
 
 ```{r}
 set.seed(1)
+# generators
+psi   <- tibble(x = runif(100, 0, 100),
+                y = runif(100, 0, 100),
+                d = rgamma(100, 50, 200))
+
+
 # some parameters
 p1 <- lsn_simpars_default(ndata = 300, 
                           # kernel shape
                           tau = .5,
-                          # generator tree sizes, gamma-distr
-                          psi_dbh = c(50, 200),
-                          # Repulsion in the generator tree locations, Strauss
-                          psi_lambda0 = 0.01,
-                          psi_gamma = log(.1), # -inf hard-core, 0 none 
-                          psi_range = 15, 
                           # logistic coefficients
                           theta = c(qlogis(.05), # ambient 5%
                                     log(2)) # effect of shotnoise.
                           )
 # Simulate a random generator set, create the field, and mark.
-sim1 <- lsn_simulate(p1)
+sim1 <- lsn_simulate(p1, psi = psi)
 ```
 
 For illustration, also compute the riskfield everywhere.

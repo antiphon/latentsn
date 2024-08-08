@@ -27,6 +27,52 @@ lsn_mcmc_estimate(
   timeout = Inf
 )
 }
+\arguments{
+\item{phi}{the data, tibble(x, y, xii) where the marks xii = 0,1}
+
+\item{prior_lambda0}{prior for intensity of generators (or first parameter if using Strauss)}
+
+\item{prior_dbh}{generator dbh}
+
+\item{prior_theta}{logistic regression coefficients}
+
+\item{prior_log_tau}{shape parameter, normal}
+
+\item{lambda0}{optional initial value}
+
+\item{theta}{optional initial value}
+
+\item{log_tau}{optional initial value}
+
+\item{rho_scale}{adjustment parameter. Default 1000.}
+
+\item{niter}{number of mcmc steps to run}
+
+\item{print_every}{print freq}
+
+\item{keep_every}{store generators only at this step iteration}
+
+\item{loc_storage}{pre-sample this many uniform locations (faster to batch for polygon win)}
+
+\item{win}{optional observation window, spatstat.geom::owin}
+
+\item{ada_bi}{adaptive mcmc starts from this many interations (default: niter/2)}
+
+\item{prior_psi}{strauss prior parameters c(gamma, range)}
+
+\item{Rmax}{buffering / edge correction}
+
+\item{cutoff_q}{kernel parameter}
+
+\item{...}{}
+
+\item{timeout}{max secs to use}
+}
 \description{
 MCMC Estimate Shotnoise Kernel
+}
+\details{
+all linear units are assumed to be the same, i.e. same units for locations and dbh and range-scales.
+Any covariates can be given as additional columns in phi, names starting with "X_", e.g. "X_elevation". Note that
+prior_theta should have the corresponding prior added to between first (intercept) and the last (reserved for random field).
 }
