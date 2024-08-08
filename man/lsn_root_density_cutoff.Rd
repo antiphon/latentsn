@@ -6,6 +6,15 @@
 \usage{
 lsn_root_density_cutoff(r, d, tau = 1, q = 0.997)
 }
+\arguments{
+\item{r}{distance argument}
+
+\item{d}{dbh (in meters)}
+
+\item{tau}{shape argument, >0}
+
+\item{q}{cutoff quantile of the kernel}
+}
 \description{
-Root Kernel With Cutoff
+The kernel with a cutoff for small values.
 }

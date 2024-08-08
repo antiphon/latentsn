@@ -6,6 +6,13 @@
 \usage{
 lsn_root_density(r, d, tau = 1)
 }
+\arguments{
+\item{r}{distance argument}
+
+\item{d}{dbh (in meters)}
+
+\item{tau}{shape argument, >0}
+}
 \description{
-Root Kernel
+Evaluate the kernel.
 }

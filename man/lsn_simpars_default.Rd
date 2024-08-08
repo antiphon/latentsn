@@ -19,6 +19,27 @@ lsn_simpars_default(
   ...
 )
 }
+\arguments{
+\item{bbox}{bounding box for the simulation. Like rbind(xlim, ylim) (dimension on rows)}
+
+\item{Rmax}{Buffer for extending bbox}
+
+\item{ndata}{Number of points}
+
+\item{tau}{Kernel parameter}
+
+\item{cutoff_q}{Kernel parameter}
+
+\item{psi_lambda0}{Generator intensity}
+
+\item{psi_dbh}{Generator dbh parameters, vector(2), Gamma distribution}
+
+\item{theta}{Coefficient of the logistic regression, (intercept, shotnoise)}
+
+\item{rho_scale}{scaling of the field effect, default 1000.}
+
+\item{...}{}
+}
 \description{
 Default Simpars
 }

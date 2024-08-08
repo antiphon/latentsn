@@ -30,13 +30,13 @@ lsn_mcmc_estimate(
 \arguments{
 \item{phi}{the data, tibble(x, y, xii) where the marks xii = 0,1}
 
-\item{prior_lambda0}{prior for intensity of generators (or first parameter if using Strauss)}
+\item{prior_lambda0}{prior for intensity of generators (or first parameter if using Strauss; Gamma)}
 
-\item{prior_dbh}{generator dbh}
+\item{prior_dbh}{generator dbh (Gamma)}
 
-\item{prior_theta}{logistic regression coefficients}
+\item{prior_theta}{logistic regression coefficients (MVNormal)}
 
-\item{prior_log_tau}{shape parameter, normal}
+\item{prior_log_tau}{shape parameter, (Normal)}
 
 \item{lambda0}{optional initial value}
 
@@ -67,6 +67,9 @@ lsn_mcmc_estimate(
 \item{...}{}
 
 \item{timeout}{max secs to use}
+}
+\value{
+List with many elements, including the MCMC traces. Note that the parameter for the latent field ("U") needs to be exponentiated when used.
 }
 \description{
 MCMC Estimate Shotnoise Kernel

@@ -1,10 +1,10 @@
 #' MCMC Estimate Shotnoise Kernel
 #'
 #' @param phi the data, tibble(x, y, xii) where the marks xii = 0,1 
-#' @param prior_dbh generator dbh
-#' @param prior_theta logistic regression coefficients
-#' @param prior_log_tau shape parameter, normal
-#' @param prior_lambda0 prior for intensity of generators (or first parameter if using Strauss)
+#' @param prior_dbh generator dbh (Gamma)
+#' @param prior_theta logistic regression coefficients (MVNormal)
+#' @param prior_log_tau shape parameter, (Normal)
+#' @param prior_lambda0 prior for intensity of generators (or first parameter if using Strauss; Gamma)
 #' @param log_tau optional initial value
 #' @param theta optional initial value
 #' @param lambda0 optional initial value
@@ -24,6 +24,8 @@
 #' @details all linear units are assumed to be the same, i.e. same units for locations and dbh and range-scales. 
 #' Any covariates can be given as additional columns in phi, names starting with "X_", e.g. "X_elevation". Note that
 #' prior_theta should have the corresponding prior added to between first (intercept) and the last (reserved for random field).
+#'  
+#' @returns List with many elements, including the MCMC traces. Note that the parameter for the latent field ("U") needs to be exponentiated when used.
 #' 
 #' @import spatstat.geom mvnfast
 #' @export

@@ -1,6 +1,16 @@
 #' Shotnoise Field Evaluator
 #' Create a shotnoise field from given Psi pattern (x,y,dbh,tau)
 #' 
+#' @param psi Dataframe with coordinates and dbh (in meters) in columns (x,y,d)
+#' @param bbox Bounding box, used for creating a regular grid when argument `grid` is missing
+#' @param resx Resolution of the regular grid
+#' @param cutoff_q Parameter for the kernel
+#' @param grid If given, assumed to be a matrix of coordinates (x,y) where to evaluate the field
+#' 
+#' @details Will compute the shot-noise field at locations (`grid`). 
+#' 
+#' @returns If grid is given, a vector of values. If grid not given, a spatstat::im object.
+#'
 #' @import spatstat.geom
 #' @export
 lsn_shotnoise <- function(psi, 

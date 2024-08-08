@@ -7,7 +7,24 @@ Create a shotnoise field from given Psi pattern (x,y,dbh,tau)}
 \usage{
 lsn_shotnoise(psi, bbox, resx = 250, cutoff_q = 0.99, grid = NULL)
 }
+\arguments{
+\item{psi}{Dataframe with coordinates and dbh (in meters) in columns (x,y,d)}
+
+\item{bbox}{Bounding box, used for creating a regular grid when argument \code{grid} is missing}
+
+\item{resx}{Resolution of the regular grid}
+
+\item{cutoff_q}{Parameter for the kernel}
+
+\item{grid}{If given, assumed to be a matrix of coordinates (x,y) where to evaluate the field}
+}
+\value{
+If grid is given, a vector of values. If grid not given, a spatstat::im object.
+}
 \description{
 Shotnoise Field Evaluator
 Create a shotnoise field from given Psi pattern (x,y,dbh,tau)
+}
+\details{
+Will compute the shot-noise field at locations (\code{grid}).
 }

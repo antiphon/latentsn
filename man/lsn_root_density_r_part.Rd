@@ -6,6 +6,11 @@
 \usage{
 lsn_root_density_r_part(r, tau = 1)
 }
+\arguments{
+\item{r}{distance argument}
+
+\item{tau}{shape argument, >0}
+}
 \description{
-Root Kernel R-part
+The range-dependent part of the kernel.
 }

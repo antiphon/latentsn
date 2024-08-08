@@ -1,5 +1,10 @@
 #' Root Kernel R-part
-#'  
+#' 
+#' The range-dependent part of the kernel.
+#' 
+#' @param r distance argument
+#' @param tau shape argument, >0
+#' 
 #' @export
 lsn_root_density_r_part <- function(r, tau = 1) {
   # Mass preserving modification. the constant is 2/c.
@@ -11,6 +16,9 @@ lsn_root_density_r_part <- function(r, tau = 1) {
 
 #' Root Kernel D-part
 #' 
+#' The size-dependent part of the kernel.
+#' 
+#' @param d dbh, in meters 
 #' @export
 lsn_root_density_d_part <- function(d) {
   #pi * exp(-14.63682 + 3.034176 * log(2 + 125*d))
@@ -19,6 +27,13 @@ lsn_root_density_d_part <- function(d) {
 
 #' Root Kernel With Cutoff
 #' 
+#' The kernel with a cutoff for small values.
+#' 
+#' @param r distance argument
+#' @param d dbh (in meters) 
+#' @param tau shape argument, >0
+#' @param q cutoff quantile of the kernel
+#'
 #' @export
 lsn_root_density_cutoff <- function(r, d, tau = 1, q = 0.997) {
   e <- lsn_root_density_r_part(r, tau) * lsn_root_density_d_part(d)
@@ -32,6 +47,12 @@ lsn_root_density_cutoff <- function(r, d, tau = 1, q = 0.997) {
 
 
 #' Root Kernel
+#' 
+#' Evaluate the kernel.
+#' 
+#' @param r distance argument
+#' @param d dbh (in meters) 
+#' @param tau shape argument, >0
 #' 
 #' @export
 lsn_root_density <- function(r, d, tau = 1) {

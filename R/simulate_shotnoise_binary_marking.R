@@ -1,5 +1,18 @@
 #' Default Simpars
 #' 
+#' 
+#' @param bbox bounding box for the simulation. Like rbind(xlim, ylim) (dimension on rows)
+#' @param Rmax Buffer for extending bbox
+#' @param ndata Number of points
+#' @param tau Kernel parameter
+#' @param cutoff_q Kernel parameter
+#' @param psi_lambda0 Generator intensity
+#' @param psi_dbh Generator dbh parameters, vector(2), Gamma distribution
+#' @param theta Coefficient of the logistic regression, (intercept, shotnoise)
+#' @param rho_scale scaling of the field effect, default 1000.
+#' @param ... 
+#' 
+#'
 #' @export
 lsn_simpars_default <- function(bbox = rbind(0:1, 0:1) * 100,
                                 Rmax = 10,

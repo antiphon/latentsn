@@ -6,6 +6,9 @@
 \usage{
 lsn_root_density_d_part(d)
 }
+\arguments{
+\item{d}{dbh, in meters}
+}
 \description{
-Root Kernel D-part
+The size-dependent part of the kernel.
 }
