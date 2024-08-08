@@ -42,6 +42,7 @@ psi   <- tibble(x = runif(100, 0, 100),
 # some parameters
 p1 <- lsn_simpars_default(ndata = 300, 
                           # kernel shape
+                          bbox = rbind(c(0, 100), c(0, 100)),
                           tau = .5,
                           # logistic coefficients
                           theta = c(qlogis(.05), # ambient 5%
@@ -54,9 +55,9 @@ sim1 <- lsn_simulate(p1, psi = psi)
 For illustration, also compute the riskfield everywhere.
 
 ```{r}
-U <- lsn_shotnoise(psi = sim1$psi, bbox = p1$bbox, resx = 2^8) |> 
-  as_tibble()
-risk <- mutate(U ,risk = plogis(p1$theta[1] + p1$theta[2] * p1$rho_scale * value))
+U <- lsn_shotnoise(psi = sim1$psi, bbox = p1$bbox, resx = 2^8) |> as_tibble()
+
+risk <- mutate(U, risk = plogis(p1$theta[1] + p1$theta[2] * p1$rho_scale * value))
 ```
 
 Illustrate:
@@ -230,3 +231,4 @@ kernl |>
   geom_line(aes(r, kern, group = i), alpha = .1, linewidth = 2)
 ```
 
+Its a good idea to set strong priors. 
